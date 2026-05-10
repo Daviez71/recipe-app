@@ -37,7 +37,9 @@ function MealPlan() {
       </button>
 
       {Object.keys(plan).length === 0 ? (
-        <p>No meals planned yet😥</p>
+        <p className="empty-state">
+          No meals planned yet😥
+          </p>
       ) : (
         <div className="meal-plan">
           {Object.entries(plan).map(([day, recipe]) => (

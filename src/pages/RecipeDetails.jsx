@@ -7,6 +7,9 @@ function RecipeDetails() {
   const [recipe, setRecipe] = useState(null);
   const navigate = useNavigate();
   const [day, setDay] = useState("");
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
   const isCustom = recipe && recipe.customIngredients;
 
   useEffect(() => {
@@ -24,6 +27,13 @@ function RecipeDetails() {
           setRecipe(data.meals ? data.meals[0] : null);
         });
     }
+    const savedRatings = JSON.parse(localStorage.getItem("ratings")) || {};
+
+    setRating(savedRatings[id] || 0);
+
+    const savedComments = JSON.parse(localStorage.getItem("comments")) || [];
+
+    setComments(savedComments[id] || []);
   }, [id]);
   // run when the page loads or id changes
 
@@ -68,28 +78,71 @@ function RecipeDetails() {
     alert(`${recipe.strMeal} added to ${day}`);
   }
 
-  function handleDelete(){
+  function handleAddToshoppingList() {
+    const existing = JSON.parse(localStorage.getItem("shoppingList")) || [];
+
+    const formattedIngredients = ingredients.map((item) => ({
+      text: item,
+      checked: false,
+    }));
+
+    const combined = [...existing, ...formattedIngredients];
+
+    const updated = combined.filter(
+      (item, index, self) =>
+        index === self.findIndex((i) => i.text === item.text),
+    );
+
+    localStorage.setItem("shoppingList", JSON.stringify(updated));
+    alert("ingredients added to shopping List 🛒");
+  }
+
+  function handleDelete() {
     const confirmDelete = window.confirm("Delete this recipe?");
 
     if (!confirmDelete) return;
 
-    const saved = 
-    JSON.parse(localStorage.getItem("customRecipes")) || [];
+    const saved = JSON.parse(localStorage.getItem("customRecipes")) || [];
 
     const updated = saved.filter((r) => r.idMeal !== id);
 
     localStorage.setItem("customRecipes", JSON.stringify(updated));
 
-    const user = 
-    JSON.parse(localStorage.getItem("userRecipes")) || []
+    const user = JSON.parse(localStorage.getItem("userRecipes")) || [];
 
     const updatedUser = user.filter((r) => r.idMeal !== id);
 
     localStorage.setItem("userRecipes", JSON.stringify(updatedUser));
 
-    alert("Recipe deleted")
+    alert("Recipe deleted");
 
-    navigate("/")
+    navigate("/");
+  }
+
+  function handleRating(value) {
+    setRating(value);
+    const savedRatings = JSON.parse(localStorage.getItem("ratings")) || {};
+
+    const updatedRatings = {
+      ...savedRatings,
+      [id]: value,
+    };
+    localStorage.setItem("ratings", JSON.stringify(updatedRatings));
+  }
+
+  function handleAddComment() {
+    if (!comment.trim()) return;
+
+    const updatedComments = [...comments, comment];
+
+    setComments(updatedComments);
+
+    const savedComments = JSON.parse(localStorage.getItem("comments")) || [];
+
+    savedComments[id] = updatedComments;
+
+    localStorage.setItem("comments", JSON.stringify(savedComments));
+    setComment("");
   }
 
   return (
@@ -99,11 +152,29 @@ function RecipeDetails() {
       </button>
 
       <h2>{recipe.strMeal}</h2>
+      <div className="rating-container">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span
+            key={star}
+            onClick={() => handleRating(star)}
+            style={{
+              cursor: "pointer",
+              fontSize: "28px",
+            }}
+          >
+            {star <= rating ? "⭐" : "☆"}
+          </span>
+        ))}
+      </div>
 
       {isCustom && (
         <button onClick={handleDelete} className="delete-btn">
           Delete Recipe 🗑️
         </button>
+      )}
+
+      {isCustom && (
+        <button onClick={() => navigate(`/edit/${id}`)}>Edit ✏️</button>
       )}
       <img
         src={recipe.strMealThumb || "https://via.placeholder.com/300"}
@@ -123,6 +194,10 @@ function RecipeDetails() {
             <li key={index}>{item}</li>
           ))}
         </ol>
+
+        <button className="shopping-btn" onClick={handleAddToshoppingList}>
+          🛒 Add Ingredients to Shopping List
+        </button>
       </div>
 
       <div className="meal-planner">
@@ -153,6 +228,29 @@ function RecipeDetails() {
         <p style={{ whiteSpace: "pre-line" }}>
           {recipe.strInstructions || "No instructions provided"}
         </p>
+      </div>
+
+      <div className="comment-section">
+        <h3>💬 Comments</h3>
+        <div className="comment-input">
+          <input type="text" 
+          placeholder="write a comment..."
+          value={comment}
+          onChange={(e)=> setComment(e.target.value)}
+          />
+  <button onClick={handleAddComment}>
+    Post
+  </button>
+        </div>
+        {comments.length === 0 ? (
+          <p>No comments yet</p>
+        ) : (
+          <ul>
+            {comments.map((c, index)=> (
+              <li key={index}>{c}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

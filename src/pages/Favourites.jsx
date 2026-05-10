@@ -40,7 +40,9 @@ function Favourites() {
 
       <div className="recipes-container">
         {favourites.length === 0 ? (
-          <p>No favourites yet 😥</p>
+          <p className="empty-state">
+            No favourites yet 😥
+            </p>
         ) : (
           favourites.map((recipe) => (
             <RecipeCard

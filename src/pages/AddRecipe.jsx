@@ -1,47 +1,70 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 function AddRecipe() {
   const [title, setTitle] = useState("");
   const [image, setImage] = useState("");
   const [instructions, setInstructions] = useState("");
   const [ingredients, setIngredients] = useState("");
+  const { id } = useParams();
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!id) return;
+    const saved = JSON.parse(localStorage.getItem("customRecipes")) || [];
+
+    const recipeToEdit = saved.find((r) => r.idMeal === id);
+
+    if (recipeToEdit) {
+      setTitle(recipeToEdit.strMeal);
+      setImage(recipeToEdit.strMealThumb);
+      setInstructions(recipeToEdit.strInstructions);
+      setIngredients(recipeToEdit.customIngredients.join(", "));
+    }
+  }, [id]);
+
   function handleSubmit(e) {
     e.preventDefault();
-    console.log("form Submitted");
-    
 
     const newRecipe = {
-      idMeal: Date.now().toString(),
-      // unique id
+      idMeal: id || Date.now().toString(),
       strMeal: title,
       strMealThumb: image,
       strInstructions: instructions,
       customIngredients: ingredients.split(",").map((item) => item.trim()),
     };
+
     const saved = JSON.parse(localStorage.getItem("customRecipes")) || [];
-    localStorage.setItem(
-      "customRecipes",
-      JSON.stringify([...saved, newRecipe]),
-    );
 
-    const existing = 
-    JSON.parse(localStorage.getItem("userRecipes")) || [];
+    let updatedRecipes;
 
-    const updated = [...existing, newRecipe];
+    if (id) {
+      // EDIT MODE
+      updatedRecipes = saved.map((r) => (r.idMeal === id ? newRecipe : r));
 
-    localStorage.setItem("userRecipes", JSON.stringify(updated));
+      alert("Recipe updated!");
+    } else {
+      // ADD MODE
+      updatedRecipes = [...saved, newRecipe];
 
-    alert("Recipe added!");
+      alert("Recipe added!");
+    }
+
+    localStorage.setItem("customRecipes", JSON.stringify(updatedRecipes));
+
+    localStorage.setItem("userRecipes", JSON.stringify(updatedRecipes));
 
     navigate("/");
   }
+
   return (
     <div className="form-container">
-      <h2>Add Your Recipe 🍳</h2>
+      <button onClick={() => navigate(-1)} className="back-btn">
+        ← Back
+      </button>
+      <h2 className="add-recipe">Add Your Recipe 🍳</h2>
       <form action="" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -51,10 +74,11 @@ function AddRecipe() {
           required
         />
 
-        <input type="text" 
-        placeholder="Image URL"
-        value= {image}
-        onChange={(e) => setImage(e.target.value)}
+        <input
+          type="text"
+          placeholder="Image URL"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
         />
 
         <textarea
@@ -70,7 +94,7 @@ function AddRecipe() {
           onChange={(e) => setIngredients(e.target.value)}
         />
 
-        <button type="submit">Add Recipe</button>
+        <button type="submit">{id ? "Update Recipe" : "Add Recipe"}</button>
       </form>
     </div>
   );

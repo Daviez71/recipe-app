@@ -109,7 +109,7 @@ function Home() {
         <h1>Recipe App 🍛</h1>
 
         <div className="header-actions">
-          <button type="submit" onClick={() => navigate("/add")} className="add-btn">
+          <button type="submit" onClick={() => navigate("/add-recipe")} className="add-btn">
             Add Recipe ➕
           </button>
 
